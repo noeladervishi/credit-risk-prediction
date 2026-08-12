@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-/.Rproj
+Rproj
 .RProfile
 renv/library/
 renv/local/
