@@ -75,7 +75,8 @@ Naively simulating each borrower's default independently massively understates t
 
 ```text
 credit-risk-prediction/
-├── _targets.R                   
+├── _targets.R
+├── renv.lock                  
 ├── scripts/
 │   ├── simulate_sample_data.R
 │   ├── data_prep.R             
