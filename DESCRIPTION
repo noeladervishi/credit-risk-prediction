@@ -1,0 +1,34 @@
+Package: creditriskmc
+Title: Credit Risk Prediction using Monte Carlo Simulation and Explainable AI
+Version: 0.1.0
+Type: Project
+Description:
+    Post-funding credit risk engine: XGBoost + logistic/scorecard PD models,
+    a single-factor Gaussian copula Monte Carlo engine for correlated
+    portfolio default simulation (EL/VaR/CVaR + stress scenarios), SHAP-based
+    explainability, and an interactive Shiny dashboard.
+License: MIT
+Encoding: UTF-8
+Depends: R (>= 4.2.0)
+Imports:
+    targets,
+    dplyr,
+    tidyr,
+    readr,
+    lubridate,
+    pROC,
+    scorecard,
+    xgboost,
+    DALEX,
+    shiny,
+    bslib,
+    plotly,
+    scales,
+    ggplot2,
+    rmarkdown,
+    knitr,
+    here
+Suggests:
+    testthat (>= 3.0.0),
+    renv
+Config/testthat/edition: 3

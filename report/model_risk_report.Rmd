@@ -1,0 +1,148 @@
+---
+title: "Credit Risk Model — Model Risk & Validation Report"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+params:
+  confidence_level: 0.99
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+library(targets)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+for (f in list.files(here::here("R"), pattern = "\\.R$", full.names = TRUE)) source(f)
+```
+
+## Executive Summary
+
+This report documents the development, performance, and risk characteristics of the credit default prediction and portfolio loss simulation models. 
+Two models were trained: a fully transparent logistic/WOE scorecard benchmark and an XGBoost model. Losses are simulated using a single-factor 
+Gaussian copula Monte Carlo engine that accounts for correlated defaults across the portfolio, rather than a naive independent-default assumption.
+
+## Data & Sample Definition
+
+- Source: Lending Club accepted-loan data, restricted to matured loans (`Fully Paid` / `Charged Off`) so outcome labels are uncensored.
+- Split: out-of-time (vintage-based), not random, train on earlier origination years, validate on the next year, and test on the most recent matured vintage, held out and touched once.
+
+```{r data-summary}
+train_df <- tar_read(train_df)
+test_df  <- tar_read(test_df)
+
+data.frame(
+  Split = c("Train", "Test (OOT)"),
+  `N loans` = c(nrow(train_df), nrow(test_df)),
+  `Default rate` = c(mean(train_df$default_flag), mean(test_df$default_flag))
+) %>% kable(digits = 4)
+```
+
+## Model Performance
+
+```{r model-perf}
+scorecard_eval <- tar_read(scorecard_eval)
+xgb_eval <- tar_read(xgb_eval)
+
+data.frame(
+  Model = c("Logistic Scorecard", "XGBoost"),
+  `Train AUC` = c(scorecard_eval$train_auc, xgb_eval$train_auc),
+  `Test AUC` = c(scorecard_eval$test_auc, xgb_eval$test_auc),
+  `Test KS` = c(scorecard_eval$test_ks, xgb_eval$test_ks),
+  `PSI (train vs. OOT test)` = c(scorecard_eval$psi, xgb_eval$psi)
+) %>% kable(digits = 3)
+```
+
+A PSI below 0.10 indicates no significant population shift between the
+training and out-of-time test vintages; between 0.10-0.25 suggests moderate
+drift worth investigating; above 0.25 indicates the model may need review or
+refitting.
+
+### Calibration (XGBoost, OOT test set)
+
+```{r calibration-plot, fig.width=7, fig.height=4}
+ggplot(xgb_eval$calibration, aes(x = mean_predicted_pd, y = observed_default_rate)) +
+  geom_point(size = 2) +
+  geom_line() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "grey50") +
+  labs(x = "Mean predicted PD (decile)", y = "Observed default rate",
+       title = "Calibration: predicted vs. observed default rate") +
+  theme_minimal()
+```
+
+## Portfolio Loss Simulation (Monte Carlo)
+
+Correlated defaults are simulated using a single-factor Gaussian copula (Vasicek/ASRF-style), the same structure underlying the Basel IRB capital
+formula, so the loss distribution reflects realistic tail risk rather than understating it as independent simulation would.
+
+```{r mc-summary}
+loss_distribution <- tar_read(loss_distribution)
+risk_metrics_summary <- tar_read(risk_metrics_summary)
+
+kable(risk_metrics_summary, digits = 0,
+      col.names = c("Confidence", "Expected Loss", "VaR", "CVaR (Expected Shortfall)"))
+```
+
+```{r loss-hist, fig.width=7, fig.height=4}
+var_line <- var_from_losses(loss_distribution, params$confidence_level)
+
+ggplot(data.frame(loss = loss_distribution), aes(x = loss)) +
+  geom_histogram(bins = 60, fill = "#2C3E50") +
+  geom_vline(xintercept = var_line, color = "#E74C3C", linetype = "dashed", linewidth = 1) +
+  annotate("text", x = var_line, y = Inf, label = paste0("VaR @ ", params$confidence_level * 100, "%"),
+            vjust = 2, hjust = -0.1, color = "#E74C3C") +
+  labs(x = "Simulated portfolio loss ($)", y = "Frequency",
+       title = "Baseline simulated loss distribution") +
+  theme_minimal()
+```
+
+## Stress Scenario
+
+```{r stress}
+stress_scenario <- tar_read(stress_scenario)
+
+data.frame(
+  Scenario = c("Baseline", "Stressed (systemic shock)"),
+  `Expected Loss` = c(mean(stress_scenario$baseline$losses), mean(stress_scenario$stressed$losses)),
+  `VaR (99%)` = c(
+    var_from_losses(stress_scenario$baseline$losses, 0.99),
+    var_from_losses(stress_scenario$stressed$losses, 0.99)
+  ),
+  `CVaR (99%)` = c(
+    cvar_from_losses(stress_scenario$baseline$losses, 0.99),
+    cvar_from_losses(stress_scenario$stressed$losses, 0.99)
+  )
+) %>% kable(digits = 0)
+```
+
+## Explainability
+
+### Global feature importance (SHAP, XGBoost)
+
+```{r shap-global, fig.width=7, fig.height=5}
+shap_global <- tar_read(shap_global)
+
+ggplot(head(shap_global, 15), aes(x = reorder(feature, mean_abs_shap), y = mean_abs_shap)) +
+  geom_col(fill = "#2980B9") +
+  coord_flip() +
+  labs(x = NULL, y = "Mean |SHAP value|", title = "Top drivers of predicted default risk") +
+  theme_minimal()
+```
+
+### Individual borrower example
+
+```{r shap-local}
+shap_values <- tar_read(shap_values)
+explain_borrower(shap_values, row_index = 1, top_n = 6) %>%
+  kable(digits = 4)
+```
+
+## 7. Limitations & Future Work
+
+- LGD is approximated from historical recovery rates on charged-off loans and applied uniformly forward; a dedicated LGD model would improve precision.
+- Asset correlation (`rho`) is a single portfolio-wide assumption; segment-specific correlations (by grade, purpose) could refine tail-risk estimates.
+- This model targets post-funding risk (PD/LGD/EAD on already-approved loans). An acceptance/underwriting model with reject inference using the rejected-applications data is a natural extension, but out of scope here since rejected applications carry no outcome label.

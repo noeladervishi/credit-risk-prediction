@@ -1,0 +1,224 @@
+:root {
+  --risk-navy: #1B2A38;
+  --risk-slate: #2C3E50;
+  --risk-accent: #2980B9;
+  --risk-danger: #E74C3C;
+  --risk-safe: #27AE60;
+  --risk-bg: #F4F6F8;
+  --risk-card-bg: #FFFFFF;
+  --risk-border: #E1E5EA;
+  --risk-text-muted: #6C7A89;
+  --risk-header-text: #FFFFFF;
+  --risk-table-header-bg: #1B2A38;
+  --risk-table-stripe: #F8F9FB;
+  --risk-pd-box-bg: #EAF1F8;
+  --risk-scrollbar-thumb: #C6CDD4;
+}
+
+[data-theme="dark"] {
+  --risk-navy: #0F1721;
+  --risk-slate: #E4E9EE;
+  --risk-accent: #4FA3D9;
+  --risk-danger: #FF6B5B;
+  --risk-safe: #3ECF8E;
+  --risk-bg: #121A24;
+  --risk-card-bg: #1B2530;
+  --risk-border: #2E3B48;
+  --risk-text-muted: #94A3B3;
+  --risk-header-text: #F4F6F8;
+  --risk-table-header-bg: #0F1721;
+  --risk-table-stripe: #212C39;
+  --risk-pd-box-bg: #1E2D3C;
+  --risk-scrollbar-thumb: #3A4A5A;
+}
+
+body, .card, .sidebar, table.table, #borrower_pd {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+body {
+  background-color: var(--risk-bg);
+  color: var(--risk-slate);
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.navbar, .bslib-page-title, h1.title, header .navbar-brand {
+  background-color: var(--risk-navy) !important;
+  color: var(--risk-header-text) !important;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.theme-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  color: var(--risk-header-text);
+  font-size: 0.85rem;
+}
+
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+  cursor: pointer;
+}
+
+.theme-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-toggle .slider {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  transition: background-color 0.25s ease;
+}
+
+.theme-toggle .slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  top: 3px;
+  background-color: #FFFFFF;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+}
+
+.theme-toggle input:checked + .slider {
+  background-color: var(--risk-accent);
+}
+
+.theme-toggle input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+.sidebar,
+.bslib-sidebar-layout > .sidebar {
+  background-color: var(--risk-card-bg);
+  border-right: 1px solid var(--risk-border);
+}
+
+.sidebar h5 {
+  color: var(--risk-navy);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 2px solid var(--risk-accent);
+  padding-bottom: 0.35rem;
+}
+
+.sidebar hr {
+  border-color: var(--risk-border);
+}
+
+.sidebar .help-block, .sidebar .text-muted {
+  color: var(--risk-text-muted) !important;
+  font-size: 0.82rem;
+}
+
+.irs--shiny .irs-bar, .irs--shiny .irs-single, .irs--shiny .irs-handle {
+  background-color: var(--risk-accent) !important;
+  border-color: var(--risk-accent) !important;
+}
+
+.card {
+  background-color: var(--risk-card-bg);
+  border: 1px solid var(--risk-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background-color: var(--risk-card-bg);
+  border-bottom: 2px solid var(--risk-accent);
+  color: var(--risk-navy);
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 0.85rem 1.1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.card-body {
+  padding: 1.1rem;
+}
+
+#borrower_pd {
+  display: inline-block;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--risk-navy);
+  background-color: var(--risk-pd-box-bg);
+  border-left: 4px solid var(--risk-accent);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+table.table {
+  font-size: 0.92rem;
+}
+
+table.table thead th {
+  background-color: var(--risk-table-header-bg);
+  color: #FFFFFF;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  border: none;
+}
+
+table.table tbody tr:nth-child(even) {
+  background-color: var(--risk-table-stripe);
+}
+
+table.table td, table.table th {
+  vertical-align: middle;
+  padding: 0.55rem 0.9rem;
+}
+
+table.table tbody tr:last-child {
+  border-left: 3px solid var(--risk-danger);
+}
+
+.plotly {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--risk-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+@media (max-width: 768px) {
+  .card-header {
+    font-size: 0.88rem;
+  }
+
+  #borrower_pd {
+    font-size: 1rem;
+  }
+}
